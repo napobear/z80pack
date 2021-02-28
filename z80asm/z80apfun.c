@@ -1,6 +1,6 @@
 /*
  *	Z80 - Assembler
- *	Copyright (C) 1987-2017 by Udo Munk
+ *	Copyright (C) 1987-2018 by Udo Munk
  *
  *	History:
  *	17-SEP-1987 Development under Digital Research CP/M 2.2
@@ -13,6 +13,7 @@
  *	13-JAN-2016 fixed buffer overflow, new expression parser from Didier
  *	02-OCT-2017 bug fixes in expression parser from Didier
  *	28-OCT-2017 added variable symbol lenght and other improvements
+ *	15-MAY-2018 mark unreferenced symbols in listing
  */
 
 /*
@@ -336,7 +337,7 @@ int op_misc(int op_code, int dummy)
 		}
 		break;
 	default:
-		fatal(F_INTERN, "illegal opcode for function op_misc");
+		fatal(F_INTERN, "invalid opcode for function op_misc");
 		break;
 	}
 	return(0);
@@ -425,7 +426,7 @@ int op_cond(int op_code, int dummy)
 			gencode = condnest[--iflevel];
 		break;
 	default:
-		fatal(F_INTERN, "illegal opcode for function op_cond");
+		fatal(F_INTERN, "invalid opcode for function op_cond");
 		break;
 	}
 	sd_flag = 2;
@@ -446,7 +447,7 @@ int op_glob(int op_code, int dummy)
 	case 2:				/* PUBLIC */
 		break;
 	default:
-		fatal(F_INTERN, "illegal opcode for function op_glob");
+		fatal(F_INTERN, "invalid opcode for function op_glob");
 		break;
 	}
 	return(0);

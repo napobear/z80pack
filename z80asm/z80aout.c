@@ -1,6 +1,6 @@
 /*
  *	Z80 - Assembler
- *	Copyright (C) 1987-2017 by Udo Munk
+ *	Copyright (C) 1987-2018 by Udo Munk
  *
  *	History:
  *	17-SEP-1987 Development under Digital Research CP/M 2.2
@@ -12,6 +12,7 @@
  *	13-JAN-2016 fixed buffer overflow, new expression parser from Didier
  *	02-OCT-2017 bug fixes in expression parser from Didier
  *	28-OCT-2017 added variable symbol lenght and other improvements
+ *	15-MAY-2018 mark unreferenced symbols in listing
  */
 
 /*
@@ -31,8 +32,8 @@ void btoh(unsigned char, char **);
 extern void fatal(int, char *);
 
 static char *errmsg[] = {		/* error messages for asmerr() */
-	"illegal opcode",		/* 0 */
-	"illegal operand",		/* 1 */
+	"invalid opcode",		/* 0 */
+	"invalid operand",		/* 1 */
 	"missing operand",		/* 2 */
 	"multiply defined symbol",	/* 3 */
 	"undefined symbol",		/* 4 */
@@ -61,8 +62,8 @@ void asmerr(int i)
 {
 	if (pass == 1) {
 		fprintf(errfp, "Error in file: %s  Line: %d\n", srcfn, c_line);
-		fprintf(errfp, errmsg[i]);
-		fprintf(errfp, "\n\n");
+		fputs(errmsg[i], errfp);
+		fputc('\n', errfp);
 	} else
 		errnum = i;
 	errors++;
@@ -120,7 +121,7 @@ void lst_line(int val, int opanz)
 		fprintf(lstfp, "%04x              ", sd_val & 0xffff);
 		goto no_data;
 	default:
-		fatal(F_INTERN, "illegal listflag for function lst_line");
+		fatal(F_INTERN, "invalid listflag for function lst_line");
 		break;
 	}
 	if (opanz >= 1) fprintf(lstfp, "%02x ", ops[0] & 0xff);
@@ -178,6 +179,7 @@ void lst_sym(void)
 {
 	register int i, j;
 	register struct sym *np;
+	char c;
 
 	p_line = j = 0;
 	strcpy(title,"Symboltable");
@@ -189,8 +191,9 @@ void lst_sym(void)
 					fputs("\n", lstfp);
 					p_line += 1;
 				}
-				fprintf(lstfp, "%-8s %04x\t", np->sym_name,
-					np->sym_val & 0xffff);
+				c = np->sym_refcnt ? ' ' : '*';
+				fprintf(lstfp, "%-8s %04x%c\t", np->sym_name,
+					np->sym_val & 0xffff, c);
 				if (++j == 4) {
 					fprintf(lstfp, "\n");
 					if (p_line++ >= ppl)
@@ -208,6 +211,7 @@ void lst_sym(void)
 void lst_sort_sym(int len)
 {
 	register int i, j;
+	char c;
 
 	p_line = i = j = 0;
 	strcpy(title, "Symboltable");
@@ -217,8 +221,9 @@ void lst_sort_sym(int len)
 			fputs("\n", lstfp);
 			p_line += 1;
 		}
-		fprintf(lstfp, "%-8s %04x\t", symarray[i]->sym_name,
-			symarray[i]->sym_val & 0xffff);
+		c = symarray[i]->sym_refcnt ? ' ' : '*';
+		fprintf(lstfp, "%-8s %04x%c\t", symarray[i]->sym_name,
+			symarray[i]->sym_val & 0xffff, c);
 		if (++j == 4) {
 			fprintf(lstfp, "\n");
 			if (p_line++ >= ppl)
